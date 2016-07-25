@@ -1,9 +1,11 @@
 const Item = require('./models/item');
 const Promotion = require('./models/promotion');
+const CartItem = require('./models/cartItem');
+
 
 function printReceipt(tags) {
 
-  const cartItems = buildCartItems(tags, Item.all());
+  const cartItems = CartItem.buildCartItems(tags, Item.all());
 
   const receiptItems = buildReceiptItems(cartItems, Promotion.all());
 
@@ -13,36 +15,12 @@ function printReceipt(tags) {
 
   console.log(receiptText);
 }
-
-function buildCartItems(tags, allItems) {
-
-  const cartItems = [];
-
-  for (const tag of tags) {
-
-    const tagArray = tag.split('-');
-    const barcode = tagArray[0];
-    const count = parseFloat(tagArray[1] || 1);
-
-    const cartItem = cartItems.find(cartItem => cartItem.item.barcode === barcode);
-
-    if (cartItem) {
-      cartItem.count += count;
-    } else {
-      const item = allItems.find(item => item.barcode === barcode);
-      cartItems.push({item, count});
-    }
-  }
-
-  return cartItems;
-}
-
 function buildReceiptItems(cartItems, allPromotions) {
   return cartItems.map(cartItem => {
 
-    const promotionType = findPromotionType(cartItem.item.barcode, allPromotions);
+    const promotionType = findPromotionType(cartItem.getBarcode(), allPromotions);
 
-    const {saved, subtotal} = discount(cartItem.count, cartItem.item.price, promotionType);
+    const {saved, subtotal} = discount(cartItem.count, cartItem.getPrice(), promotionType);
 
     return {cartItem, saved, subtotal};
   });
